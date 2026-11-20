@@ -3,18 +3,20 @@
   <rect width="600" height="600" fill="#14161b"/>
 
   <g transform="translate(300 300) scale(1.15) translate(-842.5 -325)" stroke-linecap="round" stroke-linejoin="round">
-    <polygon points="660,210 950,250 1040,155 790,120" fill="#ffffff" fill-opacity="0.045"/>
-    <polygon points="950,250 925,530 1020,400 1040,155" fill="#ffffff" fill-opacity="0.045"/>
+    <polygon points="660,210 950,250 1040,155 790,120" fill="#ffffff" fill-opacity="0.06"/>
+    <polygon points="950,250 925,530 1020,400 1040,155" fill="#ffffff" fill-opacity="0.06"/>
 
-    <polygon points="660,210 950,250 925,530 645,495" fill="#5aa0ff" fill-opacity="0.18"/>
+    <polygon points="660,210 950,250 925,530 645,495" fill="#5aa0ff" fill-opacity="0.24"/>
 
-    <g stroke="#4ade80" stroke-width="2.5" stroke-dasharray="11 9" stroke-opacity="0.85" fill="none">
+    <!-- Hidden edges, dashed -->
+    <g stroke="#4ade80" stroke-width="6" stroke-dasharray="18 16" stroke-opacity="0.85" fill="none">
       <line x1="645" y1="495" x2="780" y2="370"/>
       <line x1="780" y1="370" x2="790" y2="120"/>
       <line x1="780" y1="370" x2="1020" y2="400"/>
     </g>
 
-    <g stroke="#4ade80" stroke-width="3.5" fill="none">
+    <!-- Visible edges -->
+    <g stroke="#4ade80" stroke-width="9" fill="none">
       <line x1="660" y1="210" x2="790" y2="120"/>
       <line x1="950" y1="250" x2="1040" y2="155"/>
       <line x1="925" y1="530" x2="1020" y2="400"/>
@@ -22,20 +24,22 @@
       <line x1="1040" y1="155" x2="1020" y2="400"/>
     </g>
 
-    <g stroke="#f5c542" stroke-width="3.5" fill="none">
-      <path d="M662,206 Q726,166 797,129"/>
-      <path d="M797,129 Q915,140 1032,168"/>
-      <path d="M952,247 Q990,208 1031,170"/>
-      <path d="M1031,170 Q1024,292 1011,414"/>
-      <path d="M927,527 Q968,470 1011,414"/>
+    <!-- Freehand guess, a little short of the real back face -->
+    <g stroke="#f5c542" stroke-width="8" fill="none">
+      <path d="M660,210 Q735,175 806,147"/>
+      <path d="M806,147 Q912,156 1013,180"/>
+      <path d="M950,250 Q984,213 1013,180"/>
+      <path d="M1013,180 Q1008,288 999,393"/>
+      <path d="M925,530 Q962,462 999,393"/>
     </g>
 
-    <polygon points="660,210 950,250 925,530 645,495" fill="none" stroke="#5aa0ff" stroke-width="4.5"/>
+    <!-- Given face outline and corners -->
+    <polygon points="660,210 950,250 925,530 645,495" fill="none" stroke="#5aa0ff" stroke-width="11"/>
     <g fill="#5aa0ff">
-      <circle cx="660" cy="210" r="6.5"/>
-      <circle cx="950" cy="250" r="6.5"/>
-      <circle cx="925" cy="530" r="6.5"/>
-      <circle cx="645" cy="495" r="6.5"/>
+      <circle cx="660" cy="210" r="13"/>
+      <circle cx="950" cy="250" r="13"/>
+      <circle cx="925" cy="530" r="13"/>
+      <circle cx="645" cy="495" r="13"/>
     </g>
   </g>
 </svg>
