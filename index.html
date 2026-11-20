@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Guess the Cube: a perspective trainer</title>
+  <meta name="description" content="Test your sense of perspective: see one face of a cube, sketch the rest, then check your guess.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Guess the Cube</h1>
+    <nav class="nav">
+      <button id="open-info" class="subtle icon-btn" type="button" aria-label="Info" title="Info">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9.5"/>
+          <path d="M12 11v6"/>
+          <circle cx="12" cy="7.5" r="0.6" fill="currentColor"/>
+        </svg>
+      </button>
+      <button id="open-stats" class="subtle icon-btn" type="button" aria-label="Stats" title="Stats">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 20h16"/>
+          <path d="M7 16v-4"/>
+          <path d="M12 16V6"/>
+          <path d="M17 16v-7"/>
+        </svg>
+      </button>
+      <button id="open-settings" class="subtle icon-btn" type="button" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </nav>
+  </header>
+  <main id="stage" class="stage">
+    <canvas id="canvas" aria-label="Drawing area: sketch the rest of the cube"></canvas>
+    <div id="result" class="result" aria-live="polite" hidden></div>  </main>
+  <footer class="toolbar">
+    <span class="spacer"></span>
+    <button id="undo" type="button" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="clear" type="button" title="Clear (C)">Clear</button>
+    <button id="primary" class="primary" type="button" title="Enter / Space">Reveal</button>
+  </footer>
+
+  <dialog id="settings-dialog" class="panel" aria-labelledby="settings-title">
+    <form method="dialog">
+      <header class="panel-head">
+        <h2 id="settings-title">Settings</h2>
+        <button class="subtle close" type="submit" aria-label="Close">✕</button>
+      </header>
+
+      <label class="setting">
+        <input id="setting-score-hidden" type="checkbox">
+        <span>
+          <strong>Score hidden edges</strong>
+          <small>When this is on, you have to draw all 8 missing edges, including the ones hidden behind the
+            cube. When it's off, only the edges you could actually see count. You can still draw hidden edges;
+            they're shown dashed on reveal but don't affect your score unless they're off target.
+            Each mode keeps its own stats. Changes apply from your next reveal.</small>
+        </span>
+      </label>
+
+      <section class="setting-row">
+        <span>
+          <strong>Score history</strong>
+          <small>Your scores are stored in this browser only. See them in Stats.</small>
+        </span>
+        <button id="reset-stats" class="danger" type="button">Reset stats</button>
+      </section>
+
+      <footer class="panel-foot">
+        <button class="primary" type="submit">Done</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="stats-dialog" class="panel panel-wide" aria-labelledby="stats-title">
+    <form method="dialog">
+      <header class="panel-head">
+        <h2 id="stats-title">Stats</h2>
+        <button class="subtle close" type="submit" aria-label="Close">✕</button>
+      </header>
+
+      <div class="stats-filters">
+        <div class="segmented" role="group" aria-label="Time range">
+          <button type="button" data-range="all" aria-pressed="true">All time</button>
+          <button type="button" data-range="session" aria-pressed="false">This session</button>
+        </div>
+        <span id="stats-mode" class="stats-mode"></span>
+      </div>
+
+      <div id="stats-tiles" class="tiles"></div>
+
+      <section class="chart-block">
+        <h3>Score per round</h3>
+        <div id="stats-chart" class="chart"></div>
+        <p id="stats-note" class="chart-note" hidden></p>
+        <details class="chart-table">
+          <summary>Show as table</summary>
+          <div id="stats-table" class="table-wrap"></div>
+        </details>
+      </section>
+
+      <footer class="panel-foot">
+        <button class="primary" type="submit">Done</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="info-dialog" class="panel" aria-labelledby="info-title">
+    <form method="dialog">
+      <header class="panel-head">
+        <h2 id="info-title">About Guess the Cube</h2>
+        <button class="subtle close" type="submit" aria-label="Close">✕</button>
+      </header>
+
+      <p>A quick way to train your sense of perspective. Each round shows one face of a cube in a random
+        orientation, drawn in true perspective. Your job is to sketch the rest of the cube.</p>
+
+      <h3>How to play</h3>
+      <ol>
+        <li>Look at the <span class="swatch given">blue face</span>. The cube always extends <em>away</em> from you, behind it.</li>
+        <li>Sketch the missing edges freehand. That's a depth edge from each corner, plus the square of the far face.</li>
+        <li>Press <strong>Reveal</strong> to see the <span class="swatch truth">real cube</span> over
+          <span class="swatch sketch">your sketch</span>. Dashed lines are edges hidden behind the cube.</li>
+        <li>Press <strong>Next cube</strong> and go again.</li>
+      </ol>
+
+      <h3>Controls</h3>
+      <ul class="keys">
+        <li><kbd>Enter</kbd> / <kbd>Space</kbd>: reveal, or next cube</li>
+        <li><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd>: undo last stroke</li>
+        <li><kbd>C</kbd>: clear the sketch</li>
+        <li>Mouse, touch and pen all work.</li>
+      </ul>
+
+      <h3>Scoring</h3>
+      <p>Your strokes are compared with the edges you had to guess. Stray lines cost points, and so do edges
+        you leave out. Retracing the blue face neither helps nor hurts. A sketch that adds nothing to the blue
+        face scores 0, and a perfect trace scores 100. Hidden edges count only if <em>Score hidden edges</em>
+        is on in Settings.</p>
+
+      <footer class="panel-foot">
+        <button class="primary" type="submit">Got it</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
