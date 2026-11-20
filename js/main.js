@@ -178,3 +178,22 @@ window.addEventListener('keydown', (e) => {
 
 new ResizeObserver(resize).observe(stage);
 resize();
+
+// Show the info panel on a first visit. It counts as seen once closed, so a reload before then shows it again.
+const SEEN_INFO_KEY = 'guess-the-cube-seen-info';
+let seenInfo = true;
+try {
+  seenInfo = localStorage.getItem(SEEN_INFO_KEY) === '1';
+} catch {
+  /* storage unavailable: don't nag on every load */
+}
+if (!seenInfo) {
+  infoDialog.addEventListener('close', () => {
+    try {
+      localStorage.setItem(SEEN_INFO_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  }, { once: true });
+  infoDialog.showModal();
+}
