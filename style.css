@@ -570,8 +570,31 @@ dialog.panel-wide {
 
 .panel-foot {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 1rem;
   margin-top: 1rem;
+}
+
+.repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.repo-link:hover,
+.repo-link:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.repo-link svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 @media (max-width: 520px) {
