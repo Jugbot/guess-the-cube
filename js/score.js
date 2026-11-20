@@ -44,15 +44,21 @@ export function scoreSketch(strokes, round, { scoreHidden = true } = {}) {
   const drawn = strokes.filter((s) => s.length > 0).map((s) => resample(s));
   if (drawn.length === 0) return { score: 0, precision: Infinity, recall: Infinity };
 
-  const v = round.verts;
-  const seg = (e) => [v[e.a], v[e.b]];
-  const givenSegs = round.edges.filter((e) => e.given).map(seg);
+  // Each edge is a projected polyline: two points for a straight edge, many for a fisheye curve.
+  const segsOf = (e) => e.pts.slice(1).map((p, i) => [e.pts[i], p]);
+  const givenSegs = round.edges.filter((e) => e.given).flatMap(segsOf);
   const otherEdges = round.edges.filter((e) => !e.given);
   let targetEdges = scoreHidden ? otherEdges : otherEdges.filter((e) => e.visible);
   if (targetEdges.length === 0) targetEdges = otherEdges;
-  const otherSegs = otherEdges.map(seg);
-  const targetSegs = targetEdges.map(seg);
-  const minDist = (p, segs) => Math.min(...segs.map(([a, b]) => distPointSeg(p, a, b)));
+  const otherSegs = otherEdges.flatMap(segsOf);
+  const minDist = (p, segs) => {
+    let m = Infinity;
+    for (const [a, b] of segs) {
+      const d = distPointSeg(p, a, b);
+      if (d < m) m = d;
+    }
+    return m;
+  };
 
   // Precision: how far each drawn point is from the nearest cube edge. Points that just retrace
   // the given face are ignored, so they neither help nor hurt.
@@ -67,7 +73,7 @@ export function scoreSketch(strokes, round, { scoreHidden = true } = {}) {
 
   // Recall: how far each point on the edges to be guessed is from the sketch.
   const strokeSegs = drawn.flatMap((s) => (s.length === 1 ? [[s[0], s[0]]] : s.slice(1).map((p, i) => [s[i], p])));
-  const targetSamples = targetSegs.flatMap(([a, b]) => resample([a, b]));
+  const targetSamples = targetEdges.flatMap((e) => resample(e.pts));
   const recall = mean(
     targetSamples.map((p) => {
       let m = Infinity;

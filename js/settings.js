@@ -4,6 +4,8 @@ const KEY = 'guess-the-cube-settings';
 
 const DEFAULTS = {
   scoreHidden: true, // whether edges hidden behind the cube count toward the score
+  fisheye: false, // view cubes through a fisheye lens instead of a normal (pinhole) camera
+  fisheyeFov: 150, // fisheye field of view in degrees; wider bends edges more
 };
 
 export function loadSettings() {

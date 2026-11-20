@@ -3,6 +3,8 @@
 const KEYS = {
   all: 'guess-the-cube-stats', // all 8 edges scored (the original key, so existing history is kept)
   visible: 'guess-the-cube-stats-visible', // only visible edges scored
+  'all-fisheye': 'guess-the-cube-stats-fisheye', // the same two, through the fisheye lens
+  'visible-fisheye': 'guess-the-cube-stats-visible-fisheye',
 };
 const SESSION_KEY = 'guess-the-cube-session-start';
 const RECENT = 10;
@@ -11,7 +13,8 @@ const HISTORY_MAX = 2000; // per-round entries kept for the chart; aggregates ke
 // history: [{ t: timestamp ms, s: score }], oldest first.
 const empty = () => ({ rounds: 0, total: 0, best: 0, recent: [], history: [] });
 
-export const statsMode = (scoreHidden) => (scoreHidden ? 'all' : 'visible');
+export const statsMode = (scoreHidden, fisheye = false) =>
+  `${scoreHidden ? 'all' : 'visible'}${fisheye ? '-fisheye' : ''}`;
 
 export function loadStats(mode) {
   try {

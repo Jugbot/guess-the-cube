@@ -307,6 +307,37 @@ kbd {
   justify-content: space-between;
 }
 
+/* A control that belongs to the setting above it, lined up with that setting's text. */
+.setting-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: -0.35rem;
+  padding: 0 0 0.85rem 1.95rem;
+  font-size: 0.9rem;
+}
+
+.setting-sub input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.setting-sub output {
+  min-width: 2.8em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.setting-sub.disabled {
+  opacity: 0.4;
+}
+
+.setting-sub.disabled input[type="range"] {
+  cursor: default;
+}
+
 .setting input[type="checkbox"] {
   flex: none;
   width: 1.15rem;

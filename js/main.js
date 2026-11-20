@@ -1,4 +1,4 @@
-import { generateRound } from './cube.js';
+import { generateRound, clampFisheyeFov, FISHEYE_FOV } from './cube.js';
 import { Sketch, render } from './draw.js';
 import { scoreSketch } from './score.js';
 import { loadStats, recordScore, resetAllStats, statsMode } from './stats.js';
@@ -17,9 +17,13 @@ const settingsDialog = $('settings-dialog');
 const infoDialog = $('info-dialog');
 const statsDialog = $('stats-dialog');
 const scoreHiddenInput = $('setting-score-hidden');
+const fisheyeInput = $('setting-fisheye');
+const fovInput = $('setting-fisheye-fov');
+const fovValue = $('setting-fisheye-fov-value');
 
 let settings = loadSettings();
-let stats = loadStats(statsMode(settings.scoreHidden));
+settings.fisheyeFov = clampFisheyeFov(settings.fisheyeFov);
+Object.assign(fovInput, { min: FISHEYE_FOV.min, max: FISHEYE_FOV.max, step: FISHEYE_FOV.step });
 let phase = 'drawing';
 let round = null;
 let size = { w: 0, h: 0 };
@@ -58,7 +62,7 @@ function updateControls() {
 
 function newRound() {
   phase = 'drawing';
-  round = generateRound(size.w, size.h);
+  round = generateRound(size.w, size.h, { fisheye: settings.fisheye, fisheyeFov: settings.fisheyeFov });
   sketch.clear();
   sketch.enabled = true;
   result.hidden = true;
@@ -72,7 +76,9 @@ function reveal() {
   sketch.enabled = false;
   sketch.pointerId = null;
   const { score } = scoreSketch(sketch.strokes, round, { scoreHidden: settings.scoreHidden });
-  stats = recordScore(statsMode(settings.scoreHidden), stats, score);
+  // File the score under the lens this cube was drawn with, even if the setting changed mid-round.
+  const mode = statsMode(settings.scoreHidden, round.fisheye);
+  recordScore(mode, loadStats(mode), score);
   result.innerHTML = '';
   const big = document.createElement('div');
   big.className = 'score';
@@ -112,6 +118,11 @@ function resize() {
     p[1] = p[1] * s + oy;
   };
   round.verts.forEach(remap);
+  round.edges.forEach((e) => e.pts.forEach(remap));
+  if (round.lensCircle) {
+    remap(round.lensCircle.c);
+    round.lensCircle.r *= s;
+  }
   sketch.strokes.forEach((stroke) => stroke.forEach(remap));
   round.edgeLength *= s;
   render(ctx, size.w, size.h, round, sketch.strokes, phase);
@@ -125,29 +136,55 @@ primaryBtn.addEventListener('click', primary);
 // --- Settings & info panels ---
 $('open-settings').addEventListener('click', () => {
   scoreHiddenInput.checked = settings.scoreHidden;
+  fisheyeInput.checked = settings.fisheye;
+  fovInput.value = settings.fisheyeFov;
+  syncFovControl();
   settingsDialog.showModal();
 });
+
+function syncFovControl() {
+  fovValue.textContent = `${fovInput.value}°`;
+  fovInput.disabled = !fisheyeInput.checked;
+  fovInput.parentElement.classList.toggle('disabled', fovInput.disabled);
+}
+
+// Swap the lens right away if nothing has been drawn on this cube yet; otherwise from the next cube.
+function applyLensChange() {
+  if (phase === 'drawing' && !sketch.strokes.length) newRound();
+}
 $('open-info').addEventListener('click', () => infoDialog.showModal());
 
+// Stats shows the history for the current settings.
 const statsView = createStatsView({
   dialog: statsDialog,
-  getStats: () => stats,
-  getModeLabel: () => (settings.scoreHidden ? 'Scoring all 8 edges' : 'Scoring visible edges only'),
+  getStats: () => loadStats(statsMode(settings.scoreHidden, settings.fisheye)),
+  getModeLabel: () =>
+    `${settings.scoreHidden ? 'Scoring all 8 edges' : 'Scoring visible edges only'}${settings.fisheye ? ' · Fisheye' : ''}`,
 });
 $('open-stats').addEventListener('click', () => statsView.open());
 
 scoreHiddenInput.addEventListener('change', () => {
+  // Applies from the next reveal; a score already shown keeps the mode it was scored with.
   settings = { ...settings, scoreHidden: scoreHiddenInput.checked };
   saveSettings(settings);
-  // Applies from the next reveal; a score already shown keeps the mode it was scored with.
-  stats = loadStats(statsMode(settings.scoreHidden));
+});
+
+fisheyeInput.addEventListener('change', () => {
+  settings = { ...settings, fisheye: fisheyeInput.checked };
+  saveSettings(settings);
+  syncFovControl();
+  applyLensChange();
+});
+
+fovInput.addEventListener('input', syncFovControl); // live readout while dragging
+fovInput.addEventListener('change', () => {
+  settings = { ...settings, fisheyeFov: clampFisheyeFov(fovInput.value) };
+  saveSettings(settings);
+  applyLensChange();
 });
 
 $('reset-stats').addEventListener('click', () => {
-  if (confirm('Reset your score history for both scoring modes?')) {
-    resetAllStats();
-    stats = loadStats(statsMode(settings.scoreHidden));
-  }
+  if (confirm('Reset your score history for every mode?')) resetAllStats();
 });
 
 // Clicking the dimmed backdrop closes a panel.

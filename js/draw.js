@@ -1,5 +1,7 @@
 // Freehand stroke capture and canvas rendering.
 
+import { faceOutline } from './cube.js';
+
 const COLORS = {
   bg: '#14161b',
   givenFill: 'rgba(90, 160, 255, 0.18)',
@@ -7,6 +9,8 @@ const COLORS = {
   sketch: '#f5c542',
   truth: '#4ade80',
   faceFill: 'rgba(255, 255, 255, 0.045)',
+  lensFill: 'rgba(255, 255, 255, 0.018)',
+  lensStroke: 'rgba(255, 255, 255, 0.08)',
 };
 
 /** Captures pointer strokes (mouse, touch, pen) on a canvas, in CSS pixels. */
@@ -84,10 +88,9 @@ function polygon(ctx, pts) {
   ctx.closePath();
 }
 
-function line(ctx, a, b) {
+function polyline(ctx, pts) {
   ctx.beginPath();
-  ctx.moveTo(a[0], a[1]);
-  ctx.lineTo(b[0], b[1]);
+  pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
   ctx.stroke();
 }
 
@@ -116,18 +119,29 @@ export function render(ctx, width, height, round, strokes, phase) {
   ctx.fillRect(0, 0, width, height);
   if (!round) return;
 
-  const v = round.verts;
-  const given = round.faces[round.givenFace].verts.map((i) => v[i]);
+  // Fisheye: show the lens's image circle, so it's clear where the distortion comes from.
+  if (round.lensCircle) {
+    const { c, r } = round.lensCircle;
+    ctx.beginPath();
+    ctx.arc(c[0], c[1], r, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.lensFill;
+    ctx.fill();
+    ctx.strokeStyle = COLORS.lensStroke;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  const given = faceOutline(round, round.givenFace);
+  const corners = round.faces[round.givenFace].verts.map((i) => round.verts[i]);
 
   if (phase === 'revealed') {
     // Faint fills on the front-facing faces (they never overlap for a convex solid).
     ctx.fillStyle = COLORS.faceFill;
-    round.faces
-      .filter((f) => f.front)
-      .forEach((f) => {
-        polygon(ctx, f.verts.map((i) => v[i]));
-        ctx.fill();
-      });
+    round.faces.forEach((f, i) => {
+      if (!f.front) return;
+      polygon(ctx, faceOutline(round, i));
+      ctx.fill();
+    });
   }
 
   // The given face.
@@ -143,7 +157,7 @@ export function render(ctx, width, height, round, strokes, phase) {
       ctx.lineWidth = e.visible ? 2.5 : 1.75;
       ctx.setLineDash(e.visible ? [] : [7, 6]);
       ctx.globalAlpha = e.visible ? 1 : 0.85;
-      line(ctx, v[e.a], v[e.b]);
+      polyline(ctx, e.pts);
     }
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
@@ -155,7 +169,7 @@ export function render(ctx, width, height, round, strokes, phase) {
   polygon(ctx, given);
   ctx.stroke();
   ctx.fillStyle = COLORS.givenStroke;
-  for (const [x, y] of given) {
+  for (const [x, y] of corners) {
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
     ctx.fill();

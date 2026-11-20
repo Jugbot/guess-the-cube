@@ -74,6 +74,21 @@
         </span>
       </label>
 
+      <label class="setting">
+        <input id="setting-fisheye" type="checkbox">
+        <span>
+          <strong>Fisheye lens</strong>
+          <small>See the cube through a very wide fisheye lens, so its straight edges bend into curves. Draw the
+            edges the way the lens would show them. A wider field of view bends them more. Each mode keeps its own stats. 
+            Changes apply from your next reveal.</small>
+        </span>
+      </label>
+      <div class="setting-sub">
+        <label for="setting-fisheye-fov">Field of view</label>
+        <input id="setting-fisheye-fov" type="range" min="90" max="180" step="5" value="150">
+        <output id="setting-fisheye-fov-value" for="setting-fisheye-fov">150°</output>
+      </div>
+
       <section class="setting-row">
         <span>
           <strong>Score history</strong>
